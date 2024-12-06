@@ -8,6 +8,7 @@ import gear from "../../img/gear.png";
 export const Navbar = () => {
     const { store, actions } = useContext(Context);
     const username = store.username;
+    const token = store.userToken;
     const [showModal, setShowModal] = useState(false); // Control modal visibility
     const navigate = useNavigate();
 
@@ -16,8 +17,8 @@ export const Navbar = () => {
         actions.setShowFavorites();
     };
 
-    const handleLoginSuccess = (user) => {
-        actions.login(user); // Update global store with logged-in user
+    const handleLoginSuccess = (username, password) => {
+        actions.login(username, password); // Update global store with logged-in user
         setShowModal(false); // Close the modal
     };
 
@@ -45,7 +46,7 @@ export const Navbar = () => {
                             <button className="btn btn-outline-success" type="submit">Search</button>
                         </form>
                     </div>
-                    {username ? (
+                    {token ? (
                         <>
                             <span className="navbar-text text-light ms-3">Hello, {username}</span>
                             <button className="btn btn-outline-danger ms-3" onClick={actions.logout}>Logout</button>

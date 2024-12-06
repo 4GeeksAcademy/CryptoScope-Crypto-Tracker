@@ -32,6 +32,14 @@ const injectContext = PassedComponent => {
 			// state.actions.getMessage(); // <---- calling this function from the flux.js actions
 		}, []);
 
+		useEffect( () => {
+			if(localStorage.token) {
+				state.actions.setToken()
+				state.actions.setUserName(localStorage.username)
+				state.actions.setUserId(localStorage.userID)
+			}
+		}, [] )
+
 		// The initial value for the context is not null anymore, but the current state of this component,
 		// the context will now have a getStore, getActions and setStore functions available, because they were declared
 		// on the state of this component

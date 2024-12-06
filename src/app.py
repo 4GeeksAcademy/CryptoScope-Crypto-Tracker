@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS  # Add CORS support
-from flask_jwt_extended import JWTManager  # Add JWT support
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity  # Add JWT support
 from api.utils import APIException, generate_sitemap
 from api.models import db, User, Favorites, Wallet
 from api.routes import api
@@ -67,6 +67,37 @@ def serve_any_other_file(path):
     response.cache_control.max_age = 0  # Avoid cache memory
     return response
 
+# Create a route to authenticate your users and return JWT Token
+@app.route("/token", methods=["POST"])
+def create_token():
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
+    print("Username:", username)  # Debugging
+    print("Password:", password)  # Debugging
+
+    user = User.query.filter_by(username=username).first()
+    print("User found:", user)  # Debugging
+
+    if user is None or user.password != password:  # Check user and password
+        print("Invalid credentials")  # Debugging
+        return jsonify({"msg": "Bad username or password"}), 401
+    
+    access_token = create_access_token(identity=user.id)
+    return jsonify({"token": access_token, "user_id": user.id })
+
+# Protect a route with jwt_required
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+
+    if user is None:
+        return jsonify({"msg": "User not found"}), 404
+
+    return jsonify({"id": user.id, "username": user.username}), 200
+
 @app.route('/favorites/<coin_id>', methods=['POST'])
 def add_fav(coin_id):
     user_id = request.json['user_id']
@@ -76,7 +107,7 @@ def add_fav(coin_id):
     db.session.commit()
     return jsonify(get_favs(user_id))
 
-def get_favs (id):
+def get_favs(id):
     favorites = Favorites.query.filter_by(user_id=id)
     favorites = list(map(lambda x: x.serialize(), favorites))
     return favorites
@@ -85,5 +116,3 @@ def get_favs (id):
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
     app.run(host='0.0.0.0', port=PORT, debug=True)
-
-

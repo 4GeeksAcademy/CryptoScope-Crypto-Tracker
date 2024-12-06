@@ -18,6 +18,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             ],
             username: null, // Initially no user is logged in
             userID: null,
+            token: null,
             favorites: [
                 {
                     id: "uniswap",
@@ -1100,8 +1101,8 @@ const getState = ({ getStore, getActions, setStore }) => {
             setUserId: (id) => {
                 setStore({ userID: id })
             },
-            setUserName: (email) => {
-                setStore({ username: email })
+            setUserName: (username) => {
+                setStore({ username: username })
             },
             setCurrentCoinId: (id) => {
                 setStore({ currentCoinId: id })
@@ -1148,15 +1149,18 @@ const getState = ({ getStore, getActions, setStore }) => {
                 try {
                     const response = await fetch(`/api/wallet/${userId}`);
                     if (!response.ok) throw new Error("Failed to fetch wallet data");
-        
+
                     const walletData = await response.json();
                     setStore({ ...store, wallet: walletData });
                 } catch (error) {
                     console.error("Error fetching wallet data:", error);
                 }
             },
-        
-       
+            setToken: () => {
+                setStore({userToken:localStorage.token})
+            },
+
+
             getPriceData: () => {
                 fetch(`https://api.coingecko.com/api/v3/coins/${getStore().currentCoinId}/market_chart?vs_currency=${getStore().currency}&days=${getStore().timeFrame}`)
                     .then((res) => res.json())
@@ -1175,13 +1179,100 @@ const getState = ({ getStore, getActions, setStore }) => {
                 console.log(`Sign-up request for: ${username}`);
                 // Implement API call or logic for user registration
             },
-            login: () => {
-                setStore({ username: "JohnDoe" }); // Replace with actual login logic
-                console.log("User logged in"); // Optional: Debugging message
+            // login: async (username, password) => {
+            //     try {
+            //         const resp = await fetch(process.env.BACKEND_URL + "api/login", {
+            //             method: "POST",
+            //             headers: { "Content-Type": "application/json" },
+            //             body: JSON.stringify({ 
+            //                 username: username, 
+            //                 password: password }),
+            //         });
+
+            //         if (!resp.ok) throw Error("There was a problem in the login request");
+
+            //         if (resp.status === 401) {
+            //             throw new Error("Invalid credentials");
+            //         } else if (resp.status === 400) {
+            //             throw new Error("Invalid email or password format");
+            //         }
+
+            //         const data = await resp.json();
+
+            //         // Save the token in localStorage
+            //         localStorage.setItem("jwt-token", data.token);
+
+            //         // Update the store with user details and token
+            //         setStore({
+            //             username: username,
+            //             userID: data.user_id,
+            //             token: data.token,
+            //         });
+
+            //         console.log("Login successful", data);
+            //         return data;
+            //     } catch (error) {
+            //         console.error("Login error:", error);
+            //         throw error;
+            //     }
+            // },
+
+            // Function to restore the session on app load
+            
+            login: (email, password) => {
+				fetch(process.env.BACKEND_URL + "api/login", {
+					method: 'POST',
+					body: JSON.stringify(
+						{
+							"email": email,
+							"password": password
+						}
+					),
+					headers: {
+						'Content-type': 'application/json'
+					}
+				})
+					.then(res => {
+						if(!res.ok) throw Error("There was a problem in the login request")
+
+						if(res.status === 401){
+							 throw("Invalid credentials")
+						}
+						if(res.status === 400){
+								throw ("Invalid email or password format")
+						}
+						return res.json()
+					})
+					.then(response => {
+						console.log("response", response);
+						localStorage.setItem('token', response.access_token);
+                        localStorage.setItem('username', response.username);
+                        localStorage.setItem('userID', response.userID);
+                        // localStorage.setItem('userToken', response.access_token);
+						
+						setStore({ userToken: response.access_token, userEmail: response.user.email, userID:response.userID, username:response.username })
+					})
+					.catch(error => console.error(error));
+			},
+            
+            
+            initSession: () => {
+                const token = localStorage.getItem("jwt-token");
+
+                if (token) {
+                    // Decode or validate the token if needed
+                    setStore({ token });
+                    console.log("Session restored");
+                } else {
+                    console.log("No token found");
+                }
             },
+
+            // Logout action to clear token and user data
             logout: () => {
-                setStore({ username: null }); // Clear the username
-                console.log("User logged out"); // Optional: Debugging message
+                localStorage.removeItem("token"); // Clear the token
+                setStore({ username: null, userID: null, userToken: null }); // Clear store data
+                console.log("User logged out");
             },
             search: (query) => {
                 console.log("Search query:", query); // Implement actual search logic

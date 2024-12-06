@@ -66,7 +66,9 @@ def login_user():
 
     # Create a token
     access_token = create_access_token(identity=user.id)
-    return jsonify({"message": "Login successful", "access_token": access_token, "user": user.serialize()}), 200
+    username = user.username
+    userID = user.id
+    return jsonify({"message": "Login successful", "username":username, "userID":userID, "access_token": access_token, "user": user.serialize()}), 200
 
 # Example of a protected route
 @api.route('/protected', methods=['GET'])
