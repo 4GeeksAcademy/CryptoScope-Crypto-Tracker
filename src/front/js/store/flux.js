@@ -79,18 +79,16 @@ const getState = ({ getStore, getActions, setStore }) => {
             fetchCoins: async () => {
                 setStore({ loading: true });
                 try {
-                    const options = {
-                        method: 'GET',
-                        headers: {
-                            accept: 'application/json',
-                            'x-cg-pro-api-key': process.env.COINGECKO_KEY
-                        }
-                    };
                     const response = await fetch(
-                        "https://pro-api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=30&page=1&sparkline=true", options
+                        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=30&page=1&sparkline=true"
                     );
                     const data = await response.json();
-                    setStore({ coins: data, loading: false });
+                    
+                    setStore({ 
+                        coins: data, // Populate coins
+                        filteredCoins: data, // Initialize filteredCoins with all coins
+                        loading: false 
+                    });
                 } catch (error) {
                     console.error("Error fetching coins:", error);
                     setStore({ loading: false });
@@ -163,44 +161,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 console.log(`Sign-up request for: ${username}`);
                 // Implement API call or logic for user registration
             },
-            // login: async (username, password) => {
-            //     try {
-            //         const resp = await fetch(process.env.BACKEND_URL + "api/login", {
-            //             method: "POST",
-            //             headers: { "Content-Type": "application/json" },
-            //             body: JSON.stringify({ 
-            //                 username: username, 
-            //                 password: password }),
-            //         });
-
-            //         if (!resp.ok) throw Error("There was a problem in the login request");
-
-            //         if (resp.status === 401) {
-            //             throw new Error("Invalid credentials");
-            //         } else if (resp.status === 400) {
-            //             throw new Error("Invalid email or password format");
-            //         }
-
-            //         const data = await resp.json();
-
-            //         // Save the token in localStorage
-            //         localStorage.setItem("jwt-token", data.token);
-
-            //         // Update the store with user details and token
-            //         setStore({
-            //             username: username,
-            //             userID: data.user_id,
-            //             token: data.token,
-            //         });
-
-            //         console.log("Login successful", data);
-            //         return data;
-            //     } catch (error) {
-            //         console.error("Login error:", error);
-            //         throw error;
-            //     }
-            // },
-
+            
             // Function to restore the session on app load
             
             login: (email, password) => {
@@ -262,6 +223,21 @@ const getState = ({ getStore, getActions, setStore }) => {
             search: (query) => {
                 console.log("Search query:", query); // Implement actual search logic
             },
+            searchCoins: (query) => {
+                const store = getStore();
+                
+                // Update the search query in the store
+                setStore({ searchQuery: query });
+
+                // Filter the coins based on the query
+                const filtered = store.coins.filter((coin) =>
+                    coin.name.toLowerCase().includes(query.toLowerCase()) || 
+                    coin.symbol.toLowerCase().includes(query.toLowerCase())
+                );
+
+                // Update filteredCoins in the store
+                setStore({ filteredCoins: filtered });
+            },
             getMessage: async () => {
                 try {
                     const resp = await fetch(process.env.BACKEND_URL + "/api/hello");
@@ -280,15 +256,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 });
                 setStore({ demo: demo });
             },
-            // addToFavs: (id, name, symbol, current_price) => {
-            //     const exist = getStore().favorites.find((favorite) => favorite.name === name)
-            //     if (!exist) {
-            //         let newFav = { name: name, id: id, symbol: symbol, current_price: current_price };
-            //         let newArr = [...getStore().favorites, newFav];
-            //         setStore({ favorites: newArr });
-            //         console.log("favorites:" + getStore().favorites)
-            //     } else { console.log("favorite exists") }
-            // },
+
             addToFavs: (coin) => {
                 fetch(process.env.BACKEND_URL + `favorites/${coin.id}`, {
                     method: 'POST',

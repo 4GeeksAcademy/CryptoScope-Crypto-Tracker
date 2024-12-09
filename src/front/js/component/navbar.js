@@ -10,6 +10,7 @@ export const Navbar = () => {
     const username = store.username;
     const token = store.userToken;
     const [showModal, setShowModal] = useState(false); // Control modal visibility
+    const [searchQuery, setSearchQuery] = useState(""); // State for search query
     const navigate = useNavigate();
 
     const switchToFavs = () => {
@@ -20,6 +21,12 @@ export const Navbar = () => {
     const handleLoginSuccess = (username, password) => {
         actions.login(username, password); // Update global store with logged-in user
         setShowModal(false); // Close the modal
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        actions.searchCoins(searchQuery); // Trigger search action with the query
+        navigate("/searchresults"); // Navigate to the listing page to view search results
     };
 
     return (
@@ -35,13 +42,14 @@ export const Navbar = () => {
                                 <Link className="btn btn-outline-success" to="/listingpage">List of Coins</Link>
                             </li>
                         </ul>
-                        <form className="d-flex" onSubmit={(e) => e.preventDefault()}>
+                        <form className="d-flex" onSubmit={handleSearch}>
                             <input
                                 className="form-control me-2"
                                 type="search"
-                                placeholder="Search"
+                                placeholder="Crypto: Name/Symbol"
                                 aria-label="Search"
-                                name="search"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)} // Update search query
                             />
                             <button className="btn btn-outline-success" type="submit">Search</button>
                         </form>

@@ -7,6 +7,8 @@ import Listing from "../../img/listing.png";
 import currency from "../../img/currency.png";
 import favorite from "../../img/Favorites.png";
 import wallet from "../../img/wallet.png";
+import snapshot from "../../img/snapshot.png";
+import crypto from "../../img/crypto.png";
 
 
 
@@ -31,7 +33,7 @@ export const Landing = () => {
 				<img src={Listing} alt="Listing" className="d-inline-block align-top" />
 			</div>
 			<div className="previewBox" id="perfPreview">
-				<img className="previewPhoto" src="https://placehold.co/450x550"/>
+			<img src={crypto} alt="wallet" className="d-inline-block align-top" />
 				<div className="blurbContainer">
 					<div className="blurb">Upon logging in immediately see the most important thing: the overall performance of your holdings</div>
 					<span className="listingLogin btn" onClick={() => {navigate("/userdashboard")}}>View performance</span>
@@ -42,7 +44,7 @@ export const Landing = () => {
 					<div className="blurb">View tailored historical performance in your preferred currency, access current price and demand insights, and stay updated with real-time news specific to your chosen coin</div>
 					<span className="listingLogin btn" onClick={() => {}}>Find Tokens</span>
 				</div>
-				<img className="previewPhoto" src="https://placehold.co/450x550"/>
+				<img src={snapshot} alt="wallet" className="d-inline-block align-top" />
 			</div>
 			<div className="previewBox" id="favPreview">
 			<img src={currency} alt="favorite" className="d-inline-block align-top" />

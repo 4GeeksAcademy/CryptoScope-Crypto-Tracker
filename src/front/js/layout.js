@@ -17,6 +17,9 @@ import { Favorites } from "./component/Favorites";
 import { MoreInfo } from "./pages/moreInfo";
 import { TradeModal } from "./component/tradeModal";
 import { Wallet } from "./component/Wallet";
+import { SearchResults } from "./component/searchresults";
+
+
 
 
 
@@ -45,6 +48,7 @@ const Layout = () => {
                         <Route element={<Demo />} path="/demo" />
                         <Route element={<Single />} path="/single/:theid" />
                         <Route element={<MoreInfo />} path="/moreInfo" />
+                        <Route path="/searchresults" element={<SearchResults />} />
                         <Route element={<Wallet />} path="/wallet" />
                         <Route element={<h1>Not found!</h1>} />
                     </Routes>
