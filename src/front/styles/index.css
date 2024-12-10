@@ -860,6 +860,7 @@ button.btn-success {
 .search-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 0 20px #39ff14;
+  cursor: pointer;
 }
 
 /* Card body styling */

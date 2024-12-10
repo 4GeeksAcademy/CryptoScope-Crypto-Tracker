@@ -11,22 +11,41 @@ export const Navbar = () => {
     const token = store.userToken;
     const [showModal, setShowModal] = useState(false); // Control modal visibility
     const [searchQuery, setSearchQuery] = useState(""); // State for search query
+    const [showSuggestions, setShowSuggestions] = useState(false); // State to control dropdown visibility
     const navigate = useNavigate();
 
-    const switchToFavs = () => {
-        navigate("/userdashboard#favorite");
-        actions.setShowFavorites();
-    };
+    const handleInputChange = (e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
 
-    const handleLoginSuccess = (username, password) => {
-        actions.login(username, password); // Update global store with logged-in user
-        setShowModal(false); // Close the modal
+        if (query.trim()) {
+            actions.searchCoins(query); // Trigger search action with the query
+            setShowSuggestions(true); // Show suggestions when query is not empty
+        } else {
+            setShowSuggestions(false); // Hide suggestions when query is empty
+        }
     };
 
     const handleSearch = (e) => {
         e.preventDefault();
-        actions.searchCoins(searchQuery); // Trigger search action with the query
-        navigate("/searchresults"); // Navigate to the listing page to view search results
+        if (searchQuery.trim()) {
+            actions.searchCoins(searchQuery); // Trigger search action with the query
+            navigate("/searchresults"); // Navigate to the search results page
+            setShowSuggestions(false); // Hide suggestions on search
+        }
+    };
+
+    const handleBlur = () => {
+        setTimeout(() => {
+            setShowSuggestions(false); // Delay to allow clicks on suggestions before hiding
+        }, 150);
+    };
+
+    const handleSuggestionClick = (coinName) => {
+        setSearchQuery(coinName); // Update the input with the selected suggestion
+        actions.searchCoins(coinName); // Trigger search
+        navigate("/searchresults"); // Navigate to the search results page
+        setShowSuggestions(false); // Hide suggestions after selecting
     };
 
     return (
@@ -42,16 +61,49 @@ export const Navbar = () => {
                                 <Link className="listButton btn" to="/listingpage">List of Coins</Link>
                             </li>
                         </ul>
-                        <form className="d-flex" onSubmit={handleSearch}>
+                        <form
+                            className="d-flex"
+                            onSubmit={handleSearch}
+                            style={{ position: "relative" }}
+                        >
                             <input
                                 className="form-control me-2"
                                 type="search"
                                 placeholder="Crypto: Name/Symbol"
                                 aria-label="Search"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+                                onChange={handleInputChange} // Update search query
+                                onBlur={handleBlur} // Hide suggestions when input loses focus
+                                onFocus={() => searchQuery && setShowSuggestions(true)} // Show suggestions on focus if query exists
                             />
                             <button className="searchButton btn" type="submit">Search</button>
+
+                            {/* Search Suggestions Dropdown */}
+                            {showSuggestions && store.searchSuggestions.length > 0 && (
+                                <ul
+                                    className="dropdown-menu show"
+                                    style={{
+                                        position: "absolute",
+                                        top: "100%",
+                                        left: 0,
+                                        zIndex: 10,
+                                        backgroundColor: "black",
+                                        color: "white",
+                                        border: "1px solid #39ff14",
+                                    }}
+                                >
+                                    {store.searchSuggestions.map((coin) => (
+                                        <li
+                                            key={coin.id}
+                                            className="dropdown-item"
+                                            style={{ cursor: "pointer", color: "white" }}
+                                            onClick={() => handleSuggestionClick(coin.name)}
+                                        >
+                                            {coin.name} ({coin.symbol.toUpperCase()})
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </form>
                     </div>
                     {token ? (

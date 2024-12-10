@@ -16,6 +16,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     initial: "white"
                 }
             ],
+            searchSuggestions: [], // Initialize as an empty array
             username: null, // Initially no user is logged in
             userID: null,
             token: null,
@@ -91,11 +92,11 @@ const getState = ({ getStore, getActions, setStore }) => {
                         "https://pro-api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=30&page=1&sparkline=true", options
                     );
                     const data = await response.json();
-                    
-                    setStore({ 
+
+                    setStore({
                         coins: data, // Populate coins
                         filteredCoins: data, // Initialize filteredCoins with all coins
-                        loading: false 
+                        loading: false
                     });
                 } catch (error) {
                     console.error("Error fetching coins:", error);
@@ -116,7 +117,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
 
             setToken: () => {
-                setStore({userToken:localStorage.token})
+                setStore({ userToken: localStorage.token })
             },
 
 
@@ -174,7 +175,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                                 response.prices.map((price) => {
                                     return ({ id: id, date: new Date(price[0]), price: price[1] })
                                 })]
-                            })}
+                            })
+                        }
                     })
                     .catch((err) => console.log(err))
             },
@@ -183,47 +185,47 @@ const getState = ({ getStore, getActions, setStore }) => {
                 console.log(`Sign-up request for: ${username}`);
                 // Implement API call or logic for user registration
             },
-            
-            // Function to restore the session on app load
-            
-            login: (email, password) => {
-				fetch(process.env.BACKEND_URL + "api/login", {
-					method: 'POST',
-					body: JSON.stringify(
-						{
-							"email": email,
-							"password": password
-						}
-					),
-					headers: {
-						'Content-type': 'application/json'
-					}
-				})
-					.then(res => {
-						if(!res.ok) throw Error("There was a problem in the login request")
 
-						if(res.status === 401){
-							 throw("Invalid credentials")
-						}
-						if(res.status === 400){
-								throw ("Invalid email or password format")
-						}
-						return res.json()
-					})
-					.then(response => {
-						console.log("response", response);
-						localStorage.setItem('token', response.access_token);
+            // Function to restore the session on app load
+
+            login: (email, password) => {
+                fetch(process.env.BACKEND_URL + "api/login", {
+                    method: 'POST',
+                    body: JSON.stringify(
+                        {
+                            "email": email,
+                            "password": password
+                        }
+                    ),
+                    headers: {
+                        'Content-type': 'application/json'
+                    }
+                })
+                    .then(res => {
+                        if (!res.ok) throw Error("There was a problem in the login request")
+
+                        if (res.status === 401) {
+                            throw ("Invalid credentials")
+                        }
+                        if (res.status === 400) {
+                            throw ("Invalid email or password format")
+                        }
+                        return res.json()
+                    })
+                    .then(response => {
+                        console.log("response", response);
+                        localStorage.setItem('token', response.access_token);
                         localStorage.setItem('username', response.username);
                         localStorage.setItem('userID', response.userID);
                         // localStorage.setItem('userToken', response.access_token);
-						
-						setStore({ userToken: response.access_token, userEmail: response.user.email, userID:response.userID, username:response.username });
+
+                        setStore({ userToken: response.access_token, userEmail: response.user.email, userID: response.userID, username: response.username });
                         getActions().getFavoriteIds(response.userID)
-					})
-					.catch(error => console.error(error));
-			},
-            
-            
+                    })
+                    .catch(error => console.error(error));
+            },
+
+
             initSession: () => {
                 const token = localStorage.getItem("jwt-token");
 
@@ -247,20 +249,32 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
             searchCoins: (query) => {
                 const store = getStore();
-                
+
                 // Update the search query in the store
                 setStore({ searchQuery: query });
 
                 // Filter the coins based on the query
                 const filtered = store.coins.filter((coin) =>
-                    coin.name.toLowerCase().includes(query.toLowerCase()) || 
-                    coin.symbol.toLowerCase().includes(query.toLowerCase()) || 
+                    coin.name.toLowerCase().includes(query.toLowerCase()) ||
+                    coin.symbol.toLowerCase().includes(query.toLowerCase()) ||
                     coin.id.toLowerCase().includes(query.toLowerCase())
 
                 );
 
+                // Filter the coins based on the query
+                const suggestions = store.coins
+                    .filter((coin) =>
+                        coin.name.toLowerCase().includes(query.toLowerCase()) ||
+                        coin.symbol.toLowerCase().includes(query.toLowerCase()) ||
+                        coin.id.toLowerCase().includes(query.toLowerCase())
+                    )
+                    .slice(0, 5); // Limit the results to 5 items
+
+
+
+
                 // Update filteredCoins in the store
-                setStore({ filteredCoins: filtered });
+                setStore({ filteredCoins: filtered, searchSuggestions: suggestions });
             },
             getMessage: async () => {
                 try {
@@ -305,14 +319,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             removeFromFavs: (fav_id) => {
                 fetch(process.env.BACKEND_URL + `favorites/${getStore().userID}/${fav_id}`, {
-					method: 'DELETE'
-				})
-					.then(res => {
-						if (!res.ok) throw Error(res.statusText);
+                    method: 'DELETE'
+                })
+                    .then(res => {
+                        if (!res.ok) throw Error(res.statusText);
                         return res.json();
-					})
+                    })
                     .then(response => setStore({ favoriteIds: response }))
-					.catch(error => console.error(error));
+                    .catch(error => console.error(error));
             },
 
             getFavoriteIds: (id) => {
@@ -336,7 +350,9 @@ const getState = ({ getStore, getActions, setStore }) => {
                     .then((res) => res.json())
                     .then((response) => {
                         if (!currentData.some((fav) => fav.id === data.id)) {
-                            setStore({ favoriteData: [...getStore().favoriteData, response] })}})
+                            setStore({ favoriteData: [...getStore().favoriteData, response] })
+                        }
+                    })
                     .catch((err) => console.log(err))
             }
 
